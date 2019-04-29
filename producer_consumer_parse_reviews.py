@@ -56,7 +56,7 @@ def parse(markup):
         year_section = soup.select('.single-album-tombstone__meta-year')
         # label
         label_section = soup.select('.labels-list__item')
-        
+
 
         if artist_section:
             title = title_section[0].text

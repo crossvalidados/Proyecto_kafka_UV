@@ -26,11 +26,11 @@ def connect_kafka_producer():
         return _producer
 
 
-def fetch_raw(recipe_url):
+def fetch_raw(review_url):
     html = None
-    print('Processing..{}'.format(recipe_url))
+    print('Processing..{}'.format(review_url))
     try:
-        r = requests.get(recipe_url, headers=headers)
+        r = requests.get(review_url, headers=headers)
         if r.status_code == 200:
             html = r.text
     except Exception as ex:
@@ -57,11 +57,10 @@ def get_albums():
 
                 #sleep(2)
                 album = fetch_raw(url_albums.strip('/') + link['href'])
-                #if ('?' not in recipe):
                 albums.append(album)
                 idx += 1
     except Exception as ex:
-        print('Exception in get_recipes')
+        print('Exception in get_albums')
         print(str(ex))
     finally:
         return albums
