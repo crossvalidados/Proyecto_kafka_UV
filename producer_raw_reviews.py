@@ -2,7 +2,6 @@ import requests
 from bs4 import BeautifulSoup
 from kafka import KafkaProducer
 
-
 def publish_message(producer_instance, topic_name, key, value):
     try:
         key_bytes = bytes(key, encoding='utf-8')
@@ -40,9 +39,9 @@ def fetch_raw(review_url):
         return html
 
 
-def get_albums():
+def get_albums(pag):
     albums = []
-    url = 'https://pitchfork.com/reviews/albums/'
+    url = 'https://pitchfork.com/reviews/albums/' + pag
     url_albums = 'https://pitchfork.com/'
     print('Accessing list')
 
@@ -72,7 +71,20 @@ if __name__ == '__main__':
         'Pragma': 'no-cache'
     }
 
-    all_albums = get_albums()
+    # Definimos la página a la que queremos llegar para calcular los albums con mejor rating.
+    pagina = 2
+    all_albums = []
+
+    for i in range(pagina):
+
+        pag = '?page=' + str(i + 1)
+
+        albums_iterator = get_albums(pag)
+
+        for a in albums_iterator:
+
+            all_albums.append(a)
+
     if len(all_albums) > 0:
         kafka_producer = connect_kafka_producer()
         for album in all_albums:
