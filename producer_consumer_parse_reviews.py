@@ -35,7 +35,7 @@ def parse(markup):
     year = 0
     cover = "-"
     label = "-"
-    rec = {'title': title, 'artist': artist, 'score': score, 
+    rec = {'title': title, 'artist': artist, 'score': score,
            'year': year, 'cover': cover, 'genre': genre, 'label': label}
 
 
@@ -75,7 +75,7 @@ def parse(markup):
         if label_section:
             label = label_section[0].text
 
-        rec = {'title': title, 'artist': artist, 'score': score, 
+        rec = {'title': title, 'artist': artist, 'score': score,
                'year': year, 'cover': cover, 'genre': genre, 'label': label}
 
     except Exception as ex:
@@ -91,8 +91,8 @@ if __name__ == '__main__':
     topic_name = 'raw_albums'
     parsed_topic_name = 'parsed_reviews'
 
-    consumer = KafkaConsumer(topic_name, auto_offset_reset='earliest',
-                             bootstrap_servers=['localhost:9092'], api_version=(0, 10), consumer_timeout_ms=1000)
+    consumer = KafkaConsumer(topic_name, auto_offset_reset='earliest', bootstrap_servers=['localhost:9092'], api_version=(0, 10), consumer_timeout_ms=10000)
+
     for msg in consumer:
         html = msg.value
         result = parse(html)
