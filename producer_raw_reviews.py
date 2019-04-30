@@ -42,28 +42,30 @@ def fetch_raw(review_url):
 
 def get_albums():
     albums = []
-    url = 'https://pitchfork.com/reviews/albums/'
+    url = 'https://pitchfork.com/reviews/albums/?page='
     url_albums = 'https://pitchfork.com/'
     print('Accessing list')
 
-    try:
-        r = requests.get(url, headers=headers)
-        if r.status_code == 200:
-            html = r.text
-            soup = BeautifulSoup(html, 'lxml')
-            links = soup.select('.review__link')
-            idx = 0
-            for link in links:
-
-                #sleep(2)
-                album = fetch_raw(url_albums.strip('/') + link['href'])
-                albums.append(album)
-                idx += 1
-    except Exception as ex:
-        print('Exception in get_albums')
-        print(str(ex))
-    finally:
-        return albums
+    for i in range(1,3):
+        url_page = url + str(i)
+        try:
+            r = requests.get(url_page, headers=headers)
+            if r.status_code == 200:
+                html = r.text
+                soup = BeautifulSoup(html, 'lxml')
+                links = soup.select('.review__link')
+                idx = 0
+                for link in links:
+    
+                    #sleep(2)
+                    album = fetch_raw(url_albums.strip('/') + link['href'])
+                    albums.append(album)
+                    idx += 1
+        except Exception as ex:
+            print('Exception in get_albums')
+            print(str(ex))
+       
+    return albums
 
 
 if __name__ == '__main__':
