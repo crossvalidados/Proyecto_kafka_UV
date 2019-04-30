@@ -1,0 +1,60 @@
+---
+title: "Trabajo Kafka"
+author:
+- Manuel
+- Kevin
+date: "30 de abril de 2019"
+output:
+  pdf_document: default
+---
+
+# Configuración del cluster con múltiples clusters
+
+Se ha configurado un cluster de Kafka con 3 nodos. Para ello se ha partido del archivo de configuración por defecto que viene con la instalación de Kafka (`server.properties`). Se ha generado un archivo de configuración para el segundo broker `server-1.properties` en el que se han realizado las siguientes modificaciones con respecto a `server.properties`:
+
+```
+broker.id=1
+listeners=PLAINTEXT://:9093
+log.dir=/tmp/kafka-logs-1
+```
+La configuración del tercer nodo (`server-2.properties`) se ha realizado de una forma similar, incluyendo lo siguiente:
+
+```
+broker.id=2
+listeners=PLAINTEXT://:9094
+log.dir=/tmp/kafka-logs-2
+```
+Los archivos de configuración generados están disponibles en el directorio `config/`.
+
+
+Una vez configurados los brokers es hora de poner en marcha el servidor. Comenzamos iniciando el servidor de Zookeeper:
+
+```
+zookeeper-server-start.sh config/zookeeper.properties
+```
+
+Una vez que el servidor de Zookeeper está activo podemos activar los tres brokers configurados de Kafka:
+
+```
+kafka-server-start.sh config/server.properties &
+kafka-server-start.sh config/server-1.properties &
+kafka-server-start.sh config/server-2.properties
+```
+
+El siguiente paso será crear los topics en los que vamos a producir y consumir. Los topics serán creados con un factor de replicación de 3 para aprovechar los tres nodos creados, de manera que tendremos siempre al menos dos copias de cada topic en caso de que un nodo falle. Para ello ejecutamos los siguientes comandos en la terminal:
+
+```
+kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 3 
+  --partitions 1 --topic review_link
+kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 3 
+  --partitions 1 --topic raw_albums
+kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 3 
+  --partitions 1 --topic parsed_reviews
+```
+
+
+Tras comprobar que los topics se han creado correctamente mediante `kafka-topics.sh –describe –zookeeper localhost:2181 –topic`, podemos  proceder a la ejecución del código del Python presentado.
+
+
+
+
