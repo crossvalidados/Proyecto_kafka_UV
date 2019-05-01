@@ -40,9 +40,10 @@ def fetch_raw(review_url):
 
 
 def get_albums(pag):
-  
+
     albums = []
     url = 'https://pitchfork.com/reviews/albums/' + pag
+    url_albums = 'https://pitchfork.com/'
     print('Accessing list')
 
     try:
@@ -52,6 +53,7 @@ def get_albums(pag):
             soup = BeautifulSoup(html, 'lxml')
             links = soup.select('.review__link')
             idx = 0
+
             for link in links:
 
                 #sleep(2)
@@ -61,7 +63,7 @@ def get_albums(pag):
     except Exception as ex:
         print('Exception in get_albums')
         print(str(ex))
-       
+
     return albums
 
 
@@ -76,7 +78,7 @@ if __name__ == '__main__':
     all_albums = []
 
     for i in range(pagina):
-        
+
         pag = '?page=' + str(i + 1)
         albums_iterator = get_albums(pag)
 

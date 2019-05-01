@@ -96,6 +96,7 @@ if __name__ == '__main__':
     for msg in consumer:
         html = msg.value
         result = parse(html)
+        print("Parsed record", result)
         parsed_records.append(result)
 
     consumer.close()
