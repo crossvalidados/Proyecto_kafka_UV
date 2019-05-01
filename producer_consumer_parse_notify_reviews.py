@@ -96,14 +96,30 @@ if __name__ == '__main__':
     for msg in consumer:
         html = msg.value
         result = parse(html)
-        print("Parsed record", result)
+        # print("Parsed record", result)
         parsed_records.append(result)
 
-    consumer.close()
-    #sleep(5)
+    print('====================================================================================')
+    print('\n')
+    print("Alerta")
+    print('\n')
+    print('====================================================================================')
+ 
+    score_threshold = 8
+    for msg in parsed_records:
+        review = json.loads(msg)
+        score = review['score']
+        title = review['title']
+        artist = review['artist']
+        genre = review['genre']
 
-    if len(parsed_records) > 0:
-        print('Publishing records..')
-        producer = connect_kafka_producer()
-        for rec in parsed_records:
-            publish_message(producer, parsed_topic_name, 'parsed', rec)
+        if score >= score_threshold:
+            print('Good album alert!')
+            print('Title: ' + title)
+            print('Artist: ' + artist)
+            print('Genres: ' + ', '.join(genre))
+            print('Score: {}'.format(score))
+
+            print('========================================')
+
+    consumer.close()

@@ -74,6 +74,7 @@ def get_albums(pag):
                     url_send.append(review_url)
 
             consumer_links.close()
+            print('Añadidos ', len(albums), " álbums")
 
     except Exception as ex:
         print('Exception in get_albums')
