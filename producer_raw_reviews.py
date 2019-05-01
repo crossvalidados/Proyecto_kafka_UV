@@ -2,7 +2,6 @@ import requests
 from bs4 import BeautifulSoup
 from kafka import KafkaProducer
 
-
 def publish_message(producer_instance, topic_name, key, value):
     try:
         key_bytes = bytes(key, encoding='utf-8')
@@ -40,30 +39,28 @@ def fetch_raw(review_url):
         return html
 
 
-def get_albums():
+def get_albums(pag):
+  
     albums = []
-    url = 'https://pitchfork.com/reviews/albums/?page='
-    url_albums = 'https://pitchfork.com/'
+    url = 'https://pitchfork.com/reviews/albums/' + pag
     print('Accessing list')
 
-    for i in range(1,3):
-        url_page = url + str(i)
-        try:
-            r = requests.get(url_page, headers=headers)
-            if r.status_code == 200:
-                html = r.text
-                soup = BeautifulSoup(html, 'lxml')
-                links = soup.select('.review__link')
-                idx = 0
-                for link in links:
-    
-                    #sleep(2)
-                    album = fetch_raw(url_albums.strip('/') + link['href'])
-                    albums.append(album)
-                    idx += 1
-        except Exception as ex:
-            print('Exception in get_albums')
-            print(str(ex))
+    try:
+        r = requests.get(url, headers=headers)
+        if r.status_code == 200:
+            html = r.text
+            soup = BeautifulSoup(html, 'lxml')
+            links = soup.select('.review__link')
+            idx = 0
+            for link in links:
+
+                #sleep(2)
+                album = fetch_raw(url_albums.strip('/') + link['href'])
+                albums.append(album)
+                idx += 1
+    except Exception as ex:
+        print('Exception in get_albums')
+        print(str(ex))
        
     return albums
 
@@ -74,7 +71,19 @@ if __name__ == '__main__':
         'Pragma': 'no-cache'
     }
 
-    all_albums = get_albums()
+    # Definimos la página a la que queremos llegar para calcular los albums con mejor rating.
+    pagina = 2
+    all_albums = []
+
+    for i in range(pagina):
+        
+        pag = '?page=' + str(i + 1)
+        albums_iterator = get_albums(pag)
+
+        for a in albums_iterator:
+
+            all_albums.append(a)
+
     if len(all_albums) > 0:
         kafka_producer = connect_kafka_producer()
         for album in all_albums:
