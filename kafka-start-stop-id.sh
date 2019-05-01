@@ -83,7 +83,7 @@ then
 
     if [ $id -eq 4 ]
     then
-        sudo kafka-server-stop.sh
+        kafka-server-stop.sh
         sleep 30
         serv="zookeeper.properties"
     fi
