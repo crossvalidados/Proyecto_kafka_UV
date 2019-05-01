@@ -91,7 +91,7 @@ if __name__ == '__main__':
     topic_name = 'raw_albums'
     parsed_topic_name = 'parsed_reviews'
 
-    consumer = KafkaConsumer(topic_name, auto_offset_reset='earliest', bootstrap_servers=['localhost:9092'], api_version=(0, 10), consumer_timeout_ms=10000)
+    consumer = KafkaConsumer(topic_name, auto_offset_reset='earliest', bootstrap_servers=['localhost:9092'], api_version=(0, 10), consumer_timeout_ms=15000)
 
     for msg in consumer:
         html = msg.value

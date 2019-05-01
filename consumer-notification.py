@@ -1,5 +1,6 @@
 import json
 from kafka import KafkaConsumer
+import os
 
 if __name__ == '__main__':
     parsed_topic_name = 'parsed_reviews'
@@ -29,3 +30,6 @@ if __name__ == '__main__':
 
     if consumer is not None:
         consumer.close()
+
+    print("Recuerda eliminar el topic parsed_reviews si quieres volver a comparar los álbums sin tener ninguno repetido.")
+    os.system("kafka-topics.sh --zookeeper localhost:2181 --topic parsed_reviews -delete")

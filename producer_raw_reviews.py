@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
-from kafka import KafkaProducer
+from kafka import KafkaProducer, KafkaConsumer
+import json
 
 def publish_message(producer_instance, topic_name, key, value):
     try:
@@ -41,6 +42,7 @@ def fetch_raw(review_url):
 
 def get_albums(pag):
 
+    global url_send
     albums = []
     url = 'https://pitchfork.com/reviews/albums/' + pag
     url_albums = 'https://pitchfork.com/'
@@ -52,14 +54,27 @@ def get_albums(pag):
             html = r.text
             soup = BeautifulSoup(html, 'lxml')
             links = soup.select('.review__link')
-            idx = 0
+
+            # Creamos un consumidor del contenido del topic "review_links" para filtrar por ellos.
+            consumer_links = KafkaConsumer("review_links", auto_offset_reset='earliest',
+                                     bootstrap_servers=['localhost:9092'], api_version=(0, 10), consumer_timeout_ms=15000)
+
+            links_serv = []
+            for cons_link in consumer_links:
+                links_serv.append(cons_link.value.decode('utf-8'))
 
             for link in links:
 
-                #sleep(2)
-                album = fetch_raw(url_albums.strip('/') + link['href'])
-                albums.append(album)
-                idx += 1
+                review_url = url_albums.strip('/') + link['href']
+
+                if ((review_url not in links_serv) and (review_url not in url_send)):
+
+                    album = fetch_raw(review_url)
+                    albums.append(album)
+                    url_send.append(review_url)
+
+            consumer_links.close()
+
     except Exception as ex:
         print('Exception in get_albums')
         print(str(ex))
@@ -74,8 +89,13 @@ if __name__ == '__main__':
     }
 
     # Definimos la página a la que queremos llegar para calcular los albums con mejor rating.
-    pagina = 2
+    pagina = 4
+
+    # Creamos un vector vacío para almacenar todos los álbumos extraídos.
     all_albums = []
+
+    # Creamos un vector vacío para enviar al topic "review_links"
+    url_send = []
 
     for i in range(pagina):
 
@@ -87,8 +107,18 @@ if __name__ == '__main__':
             all_albums.append(a)
 
     if len(all_albums) > 0:
+
+        # Conectamos con el cluster
         kafka_producer = connect_kafka_producer()
+
+        # Enviamos el contenido de cada álbum raw
         for album in all_albums:
             publish_message(kafka_producer, 'raw_albums', 'raw', album)
+
+        # Enviamos el contenido de cada url a almacenar
+        for url_to_send in url_send:
+            publish_message(kafka_producer, 'review_links', 'link', url_to_send)
+
+        # Cerramos el productor.
         if kafka_producer is not None:
             kafka_producer.close()
