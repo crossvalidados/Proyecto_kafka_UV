@@ -75,7 +75,7 @@ then
         			serv="zookeeper.properties"
         			echo "Closing zookeeper";;
 		    "${options[4]}")
-        			kafka-server-stop.sh
+        			sudo kafka-server-stop.sh
         			sleep 30
         			serv="zookeeper.properties";;
 		    *)
