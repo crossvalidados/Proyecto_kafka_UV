@@ -8,29 +8,68 @@ output:
   pdf_document: default
 ---
 
-# Configuración del cluster con múltiples clusters
+# Declaración de intenciones.
 
-Se ha configurado un cluster de Kafka con 3 nodos. Para ello se ha partido del archivo de configuración por defecto que viene con la instalación de Kafka (`server.properties`). Se ha generado un archivo de configuración para el segundo broker `server-1.properties` en el que se han realizado las siguientes modificaciones con respecto a `server.properties`:
+En esta memoria relataremos el trabajo realizado, incidiendo en la configuración que hemos seleccionado para Kafka, la forma en la que lo implementamos, el código, su explicación y su ejecución, y una prueba de fallo. 
+
+El objetivo es la creación de un notificador de álbumes de música con valoración superior a 8 a partir de los registros presentes en la página https://pitchfork.com/. Lo haremos de forma que se pueda ejecutar repetidamente sin variar el resultado, y que se pueda seleccionar el rango de álbumes a valorar (variando la variable _paginas_). Además, implementaremos una forma de filtrar únicamente los registros no presentes en nuestros datos, para evitar la duplicidad.
+
+Comenzaremos con una explicación de la estructura de kafka y nuestros ajustes.
+
+# Configuración de Kafka.
+
+Kafka es una aplicación de publicación y subscripción múltiple. Las dos principales ventajas de usar Kafka son su rendimiento (y escalabilidad) y su tolerancia a fallos. Sobre el primer punto no podemos trabajar mucho, dada la escala de nuestro trabajo, pero en el segundo, su característica principal (y la que usaremos) es la replicación, es decir, la posibilidad de usar múltiples brokers (servidores que almacenan los datos) de forma conjunta y coordinada.
+
+Con esto, hemos decidido crear un clúster con 3 brokers escuchando en diferentes puertos, y coordinados por zookeeper. Además, se han agregado las opciones de configuración para poder eliminar topics y para poder realizar un apagado controlado de los brokers. También se han modificado las opciones de retención de logs para eliminarlos cada 24 horas y para verificar su posible eliminación cada 30 minutos (1800000 milisegundos). Por último, se ha modificado el directorio de logs tanto en los servidores como en zookeeper para unificarlos.
+
+Así pues, las opciones modificadas son las siguientes:
+
+```
+controlled.shutdown.enable=true
+delete.topic.enable=true
+log.retention.hours=24
+log.retention.check.interval.ms=1800000
+```
+
+Y las configuraciones que difieren en cada fichero de configuración de cada servidor (0, 1 y 2 para sus IDs):
+
+Servidor 0:
+
+```
+broker.id=0
+listeners=PLAINTEXT://:9092
+log.dirs=/tmp/kafka/server-0
+```
+
+Servidor 1:
 
 ```
 broker.id=1
 listeners=PLAINTEXT://:9093
-log.dir=/tmp/kafka-logs-1
+log.dirs=/tmp/kafka/server-1
 ```
-La configuración del tercer nodo (`server-2.properties`) se ha realizado de una forma similar, incluyendo lo siguiente:
+
+Servidor 2:
 
 ```
 broker.id=2
 listeners=PLAINTEXT://:9094
-log.dir=/tmp/kafka-logs-2
+log.dirs=/tmp/kafka/server-2
 ```
-Los archivos de configuración generados están disponibles en el directorio `config/`.
 
-
-Una vez configurados los brokers es hora de poner en marcha el servidor. Comenzamos iniciando el servidor de Zookeeper:
+Zookeeper:
 
 ```
-zookeeper-server-start.sh config/zookeeper.properties
+dataDir=/tmp/kafka/zookeeper
+clientPort=2181
+```
+
+Los archivos de configuración generados están disponibles en el directorio `config/`. Cabe destacar que todo el proceso se lleva a cabo en distribuciones GNU-Linux.
+
+Una vez configurados los brokers es hora de poner en marcha el zookeeper y el clúster. Hemos desarrollado un sencillo script de gestión de este proceso, seleccionando si se pretende iniciar o apagar los brokers o zookeeper individualmente o todo junto. La utilización es muy sencilla. Lo ejemplificamos a continuación.
+
+```
+
 ```
 
 Una vez que el servidor de Zookeeper está activo podemos activar los tres brokers configurados de Kafka:

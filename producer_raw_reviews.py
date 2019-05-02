@@ -90,7 +90,7 @@ if __name__ == '__main__':
     }
 
     # Definimos la página a la que queremos llegar para calcular los albums con mejor rating.
-    pagina = 4
+    paginas = 4
 
     # Creamos un vector vacío para almacenar todos los álbumos extraídos.
     all_albums = []
@@ -98,7 +98,7 @@ if __name__ == '__main__':
     # Creamos un vector vacío para enviar al topic "review_links"
     url_send = []
 
-    for i in range(pagina):
+    for i in range(paginas):
 
         pag = '?page=' + str(i + 1)
         albums_iterator = get_albums(pag)
