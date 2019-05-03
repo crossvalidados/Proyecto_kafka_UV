@@ -1,31 +1,7 @@
 import json
 from bs4 import BeautifulSoup
-from kafka import KafkaConsumer, KafkaProducer
+from kafka import KafkaConsumer
 import re
-
-
-def publish_message(producer_instance, topic_name, key, value):
-    try:
-        key_bytes = bytes(key, encoding='utf-8')
-        value_bytes = bytes(value, encoding='utf-8')
-        producer_instance.send(topic_name, key=key_bytes, value=value_bytes)
-        producer_instance.flush()
-        print('Message published successfully.')
-    except Exception as ex:
-        print('Exception in publishing message')
-        print(str(ex))
-
-
-def connect_kafka_producer():
-    _producer = None
-    try:
-        _producer = KafkaProducer(bootstrap_servers=['localhost:9092'], api_version=(0, 10))
-    except Exception as ex:
-        print('Exception while connecting Kafka')
-        print(str(ex))
-    finally:
-        return _producer
-
 
 def parse(markup):
     artist = '-'
@@ -91,7 +67,7 @@ if __name__ == '__main__':
     topic_name = 'raw_albums'
     parsed_topic_name = 'parsed_reviews'
 
-    consumer = KafkaConsumer(topic_name, auto_offset_reset='earliest', bootstrap_servers=['localhost:9092'], api_version=(0, 10), consumer_timeout_ms=15000)
+    consumer = KafkaConsumer(topic_name, auto_offset_reset='earliest', bootstrap_servers=['localhost:9092', 'localhost:9093', 'localhost:9094'], api_version=(0, 10), consumer_timeout_ms=15000)
 
     for msg in consumer:
         html = msg.value
@@ -99,12 +75,6 @@ if __name__ == '__main__':
         # print("Parsed record", result)
         parsed_records.append(result)
 
-    print('====================================================================================')
-    print('\n')
-    print("Alerta")
-    print('\n')
-    print('====================================================================================')
- 
     score_threshold = 8
     for msg in parsed_records:
         review = json.loads(msg)

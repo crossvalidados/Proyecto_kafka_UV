@@ -9,7 +9,7 @@ def publish_message(producer_instance, topic_name, key, value):
         value_bytes = bytes(value, encoding='utf-8')
         producer_instance.send(topic_name, key=key_bytes, value=value_bytes)
         producer_instance.flush()
-        print('Message published successfully.')
+        # print('Message published successfully.')
     except Exception as ex:
         print('Exception in publishing message')
         print(str(ex))
@@ -18,7 +18,7 @@ def publish_message(producer_instance, topic_name, key, value):
 def connect_kafka_producer():
     _producer = None
     try:
-        _producer = KafkaProducer(bootstrap_servers=['localhost:9092'], api_version=(0, 10))
+        _producer = KafkaProducer(bootstrap_servers=['localhost:9092', 'localhost:9093', 'localhost:9094'], api_version=(0, 10), acks = 'all', metadata_max_age_ms = 1000)
     except Exception as ex:
         print('Exception while connecting Kafka')
         print(str(ex))
@@ -56,8 +56,8 @@ def get_albums(pag):
             links = soup.select('.review__link')
 
             # Creamos un consumidor del contenido del topic "review_links" para filtrar por ellos.
-            consumer_links = KafkaConsumer("review_links", auto_offset_reset='earliest',
-                                     bootstrap_servers=['localhost:9092'], api_version=(0, 10), consumer_timeout_ms=15000)
+
+            consumer_links = KafkaConsumer('review_links', auto_offset_reset='earliest', bootstrap_servers=['localhost:9092', 'localhost:9093', 'localhost:9094'], api_version=(0, 10), consumer_timeout_ms=15000)
 
             links_serv = []
             for cons_link in consumer_links:
@@ -90,7 +90,7 @@ if __name__ == '__main__':
     }
 
     # Definimos la página a la que queremos llegar para calcular los albums con mejor rating.
-    paginas = 4
+    paginas = 1
 
     # Creamos un vector vacío para almacenar todos los álbumos extraídos.
     all_albums = []
@@ -112,13 +112,17 @@ if __name__ == '__main__':
         # Conectamos con el cluster
         kafka_producer = connect_kafka_producer()
 
+        print("Enviando albums.")
         # Enviamos el contenido de cada álbum raw
         for album in all_albums:
             publish_message(kafka_producer, 'raw_albums', 'raw', album)
+        print("Enviados ", len(all_albums), " albums.")
 
+        print("Enviando links.")
         # Enviamos el contenido de cada url a almacenar
         for url_to_send in url_send:
             publish_message(kafka_producer, 'review_links', 'link', url_to_send)
+        print("Enviados", len(url_send), " links.")
 
         # Cerramos el productor.
         if kafka_producer is not None:

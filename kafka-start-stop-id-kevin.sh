@@ -29,13 +29,13 @@ then
     
 	    case $opt in 
 		    "${options[0]}")
-				echo "Starting server $id"
+				echo "Starting server 0"
 				sudo kafka-server-start.sh config/server.properties;;
 		    "${options[1]}")
-				echo "Starting server $id"
+				echo "Starting server 1"
 				sudo kafka-server-start.sh config/server-1.properties;;
 		    "${options[2]}")
-				echo "Starting server $id"
+				echo "Starting server 2"
 				sudo kafka-server-start.sh config/server-2.properties;;
 		    "${options[3]}")
 				echo "Starting zookeeper"
@@ -48,7 +48,8 @@ then
 				sudo kafka-server-start.sh config/server-2.properties ;;
 		    *)
 				exit;;
-		esac        
+		esac     
+
 	done
 
 elif [ $choice -eq 1 ]
@@ -63,37 +64,42 @@ then
     
 	    case $opt in 
 		    "${options[0]}")
-        			serv="server.properties"
-        			echo "Closing server $id";;
+                    SIGNAL=${SIGNAL:-TERM}
+                    serv="server.properties"
+                    PIDS=$(ps ax | grep -i $serv | grep java | grep -v grep | awk '{print $1}')
+        			echo "Closing server 0"
+        			sudo kill -s $SIGNAL $PIDS;;
 		    "${options[1]}")
-        			serv="server-1.properties"
-        			echo "Closing server $id";;
+        			SIGNAL=${SIGNAL:-TERM}
+                    serv="server-1.properties"
+                    PIDS=$(ps ax | grep -i $serv | grep java | grep -v grep | awk '{print $1}')
+        			echo "Closing server 1"
+        			sudo kill -s $SIGNAL $PIDS;;
 		    "${options[2]}")
-        			serv="server-2.properties"
-        			echo "Closing server $id";;
+        			SIGNAL=${SIGNAL:-TERM}
+                    serv="server-2.properties"
+                    PIDS=$(ps ax | grep -i $serv | grep java | grep -v grep | awk '{print $1}')
+        			echo "Closing server 2"
+        			sudo kill -s $SIGNAL $PIDS;;
 		    "${options[3]}")
-        			serv="zookeeper.properties"
-        			echo "Closing zookeeper";;
+        			SIGNAL=${SIGNAL:-TERM}
+                    serv="zookeeper.properties"
+                    PIDS=$(ps ax | grep -i $serv | grep java | grep -v grep | awk '{print $1}')
+        			echo "Closing zookeeper"
+        			sudo kill -s $SIGNAL $PIDS;;
 		    "${options[4]}")
         			sudo kafka-server-stop.sh
         			sleep 30
-        			serv="zookeeper.properties";;
+        			SIGNAL=${SIGNAL:-TERM}
+                    serv="zookeeper.properties"
+                    PIDS=$(ps ax | grep -i $serv | grep java | grep -v grep | awk '{print $1}')
+        			echo "Closing zookeeper"
+        			sudo kill -s $SIGNAL $PIDS;;
 		    *)
 			        exit;;
 		esac        
+		
 	done
-    
-    
-    SIGNAL=${SIGNAL:-TERM}
-    PIDS=$(ps ax | grep -i $serv | grep java | grep -v grep | awk '{print $1}')
-
-    if [ -z "$PIDS" ]
-    then
-    echo "No kafka server or zookeeper to stop"
-    exit 1
-    else
-    kill -s $SIGNAL $PIDS
-    fi
 
 else
     echo "Not a valid answer"
