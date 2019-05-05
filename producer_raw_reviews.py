@@ -90,7 +90,7 @@ if __name__ == '__main__':
     }
 
     # Definimos la página a la que queremos llegar para calcular los albums con mejor rating.
-    paginas = 1
+    paginas = 3
 
     # Creamos un vector vacío para almacenar todos los álbumos extraídos.
     all_albums = []

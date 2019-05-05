@@ -12,7 +12,7 @@ output:
 
 En esta memoria relataremos el trabajo realizado, incidiendo en la configuración que hemos seleccionado para Kafka, la forma en la que lo implementamos, el código, su explicación y su ejecución, y una prueba de fallo.
 
-El objetivo es la creación de un notificador de álbumes de música con valoración superior a 8 a partir de los registros presentes en la página https://pitchfork.com/. Lo haremos de forma que se pueda ejecutar repetidamente sin variar el resultado, y que se pueda seleccionar el rango de álbumes a valorar (variando la variable _paginas_). Además, implementaremos una forma de filtrar únicamente los registros no presentes en nuestros datos, para evitar la duplicidad.
+El objetivo es la creación de un notificador de álbumes de música con valoración superior a 7.5 a partir de los registros presentes en la página https://pitchfork.com/. Lo haremos de forma que se pueda ejecutar repetidamente sin variar el resultado, y que se pueda seleccionar el rango de álbumes a valorar (variando la variable _paginas_). Además, implementaremos una forma de filtrar únicamente los registros no presentes en nuestros datos, para evitar la duplicidad.
 
 Comenzaremos con una explicación de la estructura de kafka y nuestros ajustes.
 
@@ -95,7 +95,7 @@ Como hemos contado antes, el propósito del código es crear un aviso de recomen
 El primer script es el llamado *producer_raw_reviews.py*, y se encarga de acceder a la página web y almacenar los datos de los álbumes (por páginas de 12 álbumes por página, según el número de páginas que designemos) en el topic *raw_albums* de nuestro clúster Kafka. Por otra parte, también almacena los links de los álbumes (en el tópic *review_links*) ya almacenados para filtrar por ellos,
 y evitar que se envíen mensajes duplicados al topic.
 
-El segundo script se llama *producer_consumer_parse_notify_reviews.py* y se encarga de gestionar los mensajes del topic *raw_albums* y obtener los campos de _título, puntaje, artistas, género, imagen, año y etiqueta_, para posteriormente filtrar los de puntaje superior a 8 y devolverlos como recomendados.
+El segundo script se llama *producer_consumer_parse_notify_reviews.py* y se encarga de gestionar los mensajes del topic *raw_albums* y obtener los campos de _título, puntaje, artistas, género, imagen, año y etiqueta_, para posteriormente filtrar los de puntaje superior a 7.5 y devolverlos como recomendados.
 
 ## Funciones del código.
 
@@ -118,6 +118,11 @@ Comenzamos ejecutando el script *producer_raw_reviews.py*, en el que hemos defin
 
 ```
 Accessing list
+Processing..https://pitchfork.com/reviews/albums/aphex-twin-selected-ambient-works-volume-ii/
+Processing..https://pitchfork.com/reviews/albums/rico-nasty-kenny-beats-anger-management/
+Processing..https://pitchfork.com/reviews/albums/pure-bathing-culture-night-pass/
+Processing..https://pitchfork.com/reviews/albums/shy-glizzy-covered-n-blood/
+Processing..https://pitchfork.com/reviews/albums/joel-ross-kingmaker/
 Processing..https://pitchfork.com/reviews/albums/vampire-weekend-father-of-the-bride/
 Processing..https://pitchfork.com/reviews/albums/l7-scatter-the-rats/
 Processing..https://pitchfork.com/reviews/albums/local-natives-violet-street/
@@ -125,11 +130,6 @@ Processing..https://pitchfork.com/reviews/albums/pile-green-and-gray/
 Processing..https://pitchfork.com/reviews/albums/omb-peezy-preacher-to-the-streets/
 Processing..https://pitchfork.com/reviews/albums/kevin-abstract-arizona-baby/
 Processing..https://pitchfork.com/reviews/albums/nick-murphy-run-fast-sleep-naked/
-Processing..https://pitchfork.com/reviews/albums/judy-and-the-jerks-music-for-donuts-ep/
-Processing..https://pitchfork.com/reviews/albums/various-artists-mettavolution/
-Processing..https://pitchfork.com/reviews/albums/kevin-morby-oh-my-god/
-Processing..https://pitchfork.com/reviews/albums/dj-nate-take-off-mode/
-Processing..https://pitchfork.com/reviews/albums/club-night-what-life/
 Añadidos  12  álbums
 Enviando albums.
 Enviados  12  albums.
@@ -148,24 +148,55 @@ kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic raw_albums -
 Se obtiene una larga cadena en formato lxml y una sentencia final *Processed a total of 12 messages*, que indica que contiene 12 mensajes.
 Esto se realiza de igual forma con el topic *review_links* y se obtiene un output equivalente.
 
-A continuación ejecutamos el segundo script (*producer_consumer_parse_notify_reviews.py*), que únicamente crea un Consumidor y lee los mensajes del topic *raw_albums*, para procesarlos y mostrar los de puntaje superior a 8. Obtenemos el siguiente output.
+A continuación ejecutamos el segundo script (*producer_consumer_parse_notify_reviews.py*), que únicamente crea un Consumidor y lee los mensajes del topic *raw_albums*, para procesarlos y mostrar los de puntaje superior a 7.5. Obtenemos el siguiente output.
 
 ```
 Running Consumer..
+========================================
+Good album alert!
+Title: Selected Ambient Works Volume II
+Artist: Aphex Twin
+Genres: Electronic
+Score: 10.0
+========================================
+Good album alert!
+Title: Anger Management
+Artist: Rico Nasty
+Genres: Rap
+Score: 7.6
+========================================
+Good album alert!
+Title: KingMaker
+Artist: Joel Ross
+Genres: Jazz
+Score: 7.8
+========================================
 Good album alert!
 Title: Father of the Bride
 Artist: Vampire Weekend
 Genres: Rock
 Score: 8.0
 ========================================
+Good album alert!
+Title: Green and Gray
+Artist: Pile
+Genres: Rock
+Score: 7.9
+========================================
+
 ```
 
-Donde se muestra un único álbum con puntaje superior a 8 de entre los 12 procesados. Para comprobar el funcionamiento del filtro, vamos a ejecutar los dos scripts de nuevo en el mismo orden, pero cambiando la variable **paginas = 3** para procesar un total de 36 albums y links. El output del primer script es el siguiente:
+Donde se muestran 5 álbumes con puntaje superior a 7.5 de entre los 12 procesados. Para comprobar el funcionamiento del filtro, vamos a ejecutar los dos scripts de nuevo en el mismo orden, pero cambiando la variable **paginas = 3** para procesar un total de 36 albums y links. El output del primer script es el siguiente:
 
 ```
 Accessing list
 Añadidos  0  álbums
 Accessing list
+Processing..https://pitchfork.com/reviews/albums/judy-and-the-jerks-music-for-donuts-ep/
+Processing..https://pitchfork.com/reviews/albums/various-artists-mettavolution/
+Processing..https://pitchfork.com/reviews/albums/kevin-morby-oh-my-god/
+Processing..https://pitchfork.com/reviews/albums/dj-nate-take-off-mode/
+Processing..https://pitchfork.com/reviews/albums/club-night-what-life/
 Processing..https://pitchfork.com/reviews/albums/jackie-mendoza-luvhz-ep/
 Processing..https://pitchfork.com/reviews/albums/schoolboy-q-crash-talk/
 Processing..https://pitchfork.com/reviews/albums/the-mountain-goats-in-league-with-dragons/
@@ -173,13 +204,13 @@ Processing..https://pitchfork.com/reviews/albums/pivot-gang-you-cant-sit-with-us
 Processing..https://pitchfork.com/reviews/albums/ariel-zetina-organism-ep/
 Processing..https://pitchfork.com/reviews/albums/various-artists-for-the-throne-music-inspired-by-the-hbo-series-game-of-thrones/
 Processing..https://pitchfork.com/reviews/albums/craig-finn-i-need-a-new-war/
+Añadidos  12  álbums
+Accessing list
 Processing..https://pitchfork.com/reviews/albums/marina-love-fear/
 Processing..https://pitchfork.com/reviews/albums/otoboke-beaver-itekoma-hits/
 Processing..https://pitchfork.com/reviews/albums/bennie-maupin-the-jewel-in-the-lotus/
 Processing..https://pitchfork.com/reviews/albums/foxygen-seeing-other-people/
 Processing..https://pitchfork.com/reviews/albums/wiz-khalifa-fly-times-vol-1-the-good-fly-young/
-Añadidos  12  álbums
-Accessing list
 Processing..https://pitchfork.com/reviews/albums/lamb-the-secret-of-letting-go/
 Processing..https://pitchfork.com/reviews/albums/picastro-exit/
 Processing..https://pitchfork.com/reviews/albums/aldous-harding-designer/
@@ -187,11 +218,6 @@ Processing..https://pitchfork.com/reviews/albums/king-gizzard-and-the-lizard-wiz
 Processing..https://pitchfork.com/reviews/albums/kelsey-lu-blood/
 Processing..https://pitchfork.com/reviews/albums/body-meat-truck-music/
 Processing..https://pitchfork.com/reviews/albums/sunn-o-life-metal/
-Processing..https://pitchfork.com/reviews/albums/slauson-malone-a-quiet-farwell-or-twenty-sixteen-to-twenty-eighteen/
-Processing..https://pitchfork.com/reviews/albums/jade-bird-jade-bird/
-Processing..https://pitchfork.com/reviews/albums/grace-ives-2nd/
-Processing..https://pitchfork.com/reviews/albums/03-greedo-still-summer-in-the-projects/
-Processing..https://pitchfork.com/reviews/albums/kornel-kovacs-stockholm-marathon/
 Añadidos  12  álbums
 Enviando albums.
 Enviados  24  albums.
@@ -203,11 +229,66 @@ Vemos los que en la primera página (el script procesa los álbumes página por 
 
 ```
 Running Consumer..
+========================================
+Good album alert!
+Title: Selected Ambient Works Volume II
+Artist: Aphex Twin
+Genres: Electronic
+Score: 10.0
+========================================
+Good album alert!
+Title: Anger Management
+Artist: Rico Nasty
+Genres: Rap
+Score: 7.6
+========================================
+Good album alert!
+Title: KingMaker
+Artist: Joel Ross
+Genres: Jazz
+Score: 7.8
+========================================
 Good album alert!
 Title: Father of the Bride
 Artist: Vampire Weekend
 Genres: Rock
 Score: 8.0
+========================================
+Good album alert!
+Title: Green and Gray
+Artist: Pile
+Genres: Rock
+Score: 7.9
+========================================
+Good album alert!
+Title: Music for Donuts EP
+Artist: Judy and the Jerks
+Genres: Rock
+Score: 7.7
+========================================
+Good album alert!
+Title: Take Off Mode
+Artist: DJ Nate
+Genres: Electronic
+Score: 7.6
+========================================
+Good album alert!
+Title: What Life
+Artist: Club Night
+Genres: Rock
+Score: 7.7
+========================================
+Good album alert!
+Title: You Can't Sit With Us
+Artist: Pivot Gang
+Genres: Rap
+Score: 7.5
+========================================
+Good album alert!
+Title: Organism EP
+Artist: Ariel Zetina
+Genres: Electronic
+Score: 7.6
 ========================================
 Good album alert!
 Title: I Need a New War
@@ -216,16 +297,40 @@ Genres: Rock
 Score: 8.0
 ========================================
 Good album alert!
+Title: Itekoma Hits
+Artist: Otoboke Beaver
+Genres: Rock
+Score: 7.7
+========================================
+Good album alert!
 Title: The Jewel in the Lotus
 Artist: Bennie Maupin
 Genres: Jazz
 Score: 9.1
 ========================================
 Good album alert!
+Title: Exit
+Artist: Picastro
+Genres: Folk, Country
+Score: 7.8
+========================================
+Good album alert!
 Title: Designer
 Artist: Aldous Harding
 Genres: Folk, Country
 Score: 8.0
+========================================
+Good album alert!
+Title: Blood
+Artist: Kelsey Lu
+Genres: Experimental
+Score: 7.5
+========================================
+Good album alert!
+Title: Truck Music
+Artist: Body Meat
+Genres: Experimental
+Score: 7.5
 ========================================
 Good album alert!
 Title: Life Metal
@@ -235,18 +340,18 @@ Score: 8.4
 ========================================
 ```
 
-Vemos que el primer álbum no aparece duplicado, ya que solo tenemos un registro del mismo presente en el topic *raw_albums*. Además, se han añadido 4 nuevos álbumes con puntaje superior a 8 provenientes de las páginas 2 y 3.
+Vemos que los primeros 5 álbumes no aparecen duplicados, ya que solo tenemos un registro de cada uno presente en el topic *raw_albums*. Además, se han añadido 13 nuevos álbumes con puntaje superior a 7.5 provenientes de las páginas 2 y 3.
 
 # Prueba de funcionamiento de brokers.
 
-Ahora vamos a interrumpir el trabajo de un broker apagándolo, para ello, mostramos la estructura del topic *raw_albums* antes del apagado del broker 0 con(*kafka-topics.sh --describe --zookeeper localhost:2181 --topic raw_albums*).
+Ahora vamos a interrumpir el trabajo de un broker apagándolo, para ello, mostramos la estructura del topic *raw_albums* antes del apagado del broker 0 (con *kafka-topics.sh --describe --zookeeper localhost:2181 --topic raw_albums*).
 
 ```
 Topic:raw_albums        PartitionCount:1        ReplicationFactor:3     Configs:
         Topic: raw_albums       Partition: 0    Leader: 0       Replicas: 0,1,2 Isr: 0,1,2
 ```
 
-Que indica que tenemos los 3 brokers activos y en sincronización. Si ahora apagamos uno utilizando el script *././kafka-start-stop-id.sh* y seleccionando el broker 0, y volvemos a inspeccionar el topic *raw_albums*:
+Que indica que tenemos los 3 brokers activos y en sincronización. Si ahora apagamos uno utilizando el script *./kafka-start-stop-id.sh* y seleccionando el broker 0, y volvemos a inspeccionar el topic *raw_albums*:
 
 ```
 Topic:raw_albums        PartitionCount:1        ReplicationFactor:3     Configs:
@@ -258,6 +363,11 @@ Vemos que tenemos 2 replicas en sincronización. Si ahora ejecutamos nuestros pr
 
 ```
 Accessing list
+Processing..https://pitchfork.com/reviews/albums/aphex-twin-selected-ambient-works-volume-ii/
+Processing..https://pitchfork.com/reviews/albums/rico-nasty-kenny-beats-anger-management/
+Processing..https://pitchfork.com/reviews/albums/pure-bathing-culture-night-pass/
+Processing..https://pitchfork.com/reviews/albums/shy-glizzy-covered-n-blood/
+Processing..https://pitchfork.com/reviews/albums/joel-ross-kingmaker/
 Processing..https://pitchfork.com/reviews/albums/vampire-weekend-father-of-the-bride/
 Processing..https://pitchfork.com/reviews/albums/l7-scatter-the-rats/
 Processing..https://pitchfork.com/reviews/albums/local-natives-violet-street/
@@ -265,11 +375,6 @@ Processing..https://pitchfork.com/reviews/albums/pile-green-and-gray/
 Processing..https://pitchfork.com/reviews/albums/omb-peezy-preacher-to-the-streets/
 Processing..https://pitchfork.com/reviews/albums/kevin-abstract-arizona-baby/
 Processing..https://pitchfork.com/reviews/albums/nick-murphy-run-fast-sleep-naked/
-Processing..https://pitchfork.com/reviews/albums/judy-and-the-jerks-music-for-donuts-ep/
-Processing..https://pitchfork.com/reviews/albums/various-artists-mettavolution/
-Processing..https://pitchfork.com/reviews/albums/kevin-morby-oh-my-god/
-Processing..https://pitchfork.com/reviews/albums/dj-nate-take-off-mode/
-Processing..https://pitchfork.com/reviews/albums/club-night-what-life/
 Añadidos  12  álbums
 Enviando albums.
 Enviados  12  albums.
