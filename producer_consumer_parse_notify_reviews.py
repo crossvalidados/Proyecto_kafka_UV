@@ -45,9 +45,12 @@ def parse(markup):
         if cover_section:
             cover = cover_section[0]['src']
         if year_section:
-            year = year_section[0].text
-            year = re.findall("[0-9]+", year)[0]
-            year = int(year)
+            try:
+                year = year_section[0].text
+                year = re.findall("[0-9]+", year)[0]
+                year = int(year)
+            except:
+                year = 'Not available'
         if label_section:
             label = label_section[0].text
 
@@ -72,10 +75,10 @@ if __name__ == '__main__':
     for msg in consumer:
         html = msg.value
         result = parse(html)
-        # print("Parsed record", result)
         parsed_records.append(result)
-
-    score_threshold = 8
+        
+    print('========================================')
+    score_threshold = 7.5
     for msg in parsed_records:
         review = json.loads(msg)
         score = review['score']
